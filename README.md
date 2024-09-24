@@ -38,7 +38,7 @@ The template supports several parameters to customize the deployment:
    Clone this repository to your local machine:
 
    ```bash
-   git clone https://github.com/yourusername/jasper-reports-openshift-template.git
+   git clone https://github.com/mkeroglu/Jasper-Reports.git
 
 2. **Create the Template in OpenShift**:
    Create the template in your OpenShift project:
