@@ -1,0 +1,133 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  app: jasper-reports
+  template: jasper-reports
+metadata:
+  name: jasper-reports
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${NAME}
+  spec:
+    ports:
+    - name: web
+      port: 8080
+      targetPort: 8080
+    selector:
+      name: ${NAME}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${DB_NAME}
+  spec:
+    ports:
+    - name: db
+      port: 3306
+      targetPort: 3306
+    selector:
+      name: ${DB_NAME}
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: ${NAME}
+  spec:
+    to:
+      kind: Service
+      name: ${NAME}
+    port:
+      targetPort: web
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: ${NAME}
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: ${NAME}
+    strategy:
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          name: ${NAME}
+        name: ${NAME}
+      spec:
+        containers:
+        - env: 
+          - name: JASPERREPORTS_DATABASE_USER
+            value: ${JASPERREPORTS_DATABASE_USER} 
+          - name: JASPERREPORTS_DATABASE_PASSWORD
+            value: ${JASPERREPORTS_DATABASE_PASSWORD}
+          - name: JASPERREPORTS_DATABASE_NAME
+            value: ${JASPERREPORTS_DATABASE_NAME}
+          - name: JASPERREPORTS_DATABASE_HOST
+            value: ${JASPERREPORTS_DATABASE_HOST}
+          image: 'docker.io/bitnami/jasperreports:latest'
+          name: ${NAME}
+          ports:
+          - containerPort: 8080
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: ${DB_NAME}
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        name: ${DB_NAME}
+    strategy:
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          name: ${DB_NAME}
+        name: ${DB_NAME}
+      spec:
+        containers:
+        - env:
+          - name: MARIADB_USER
+            value: ${JASPERREPORTS_DATABASE_USER}
+          - name: MARIADB_PASSWORD
+            value: ${JASPERREPORTS_DATABASE_PASSWORD}
+          - name: MARIADB_DATABASE
+            value: ${JASPERREPORTS_DATABASE_NAME}
+          - name: ALLOW_EMPTY_PASSWORD
+            value: "yes"
+          image: 'docker.io/bitnami/mariadb:latest'
+          name: ${DB_NAME}
+          ports:
+          - containerPort: 3306
+parameters:
+- description: The name assigned to all frontend objects defined in this template.
+  displayName: Name
+  name: NAME
+  required: true
+  value: jasper-reports
+- description: The username for the database connection used by the frontend objects.
+  displayName: Database-User
+  name: JASPERREPORTS_DATABASE_USER
+  required: true
+  value: bn_jasperreports
+- description: The password for the database connection used by the frontend objects.
+  displayName: Database-Password
+  name: JASPERREPORTS_DATABASE_PASSWORD
+  required: true
+  value: bitnami
+- description: The database name used by the frontend objects.
+  displayName: Database-Name
+  name: JASPERREPORTS_DATABASE_NAME
+  required: true
+  value: bitnami_jasperreports
+- description: The hostname of the database server to which the frontend objects will connect.
+  displayName: Database-Host
+  name: JASPERREPORTS_DATABASE_HOST
+  required: true
+  value: mariadb.developer.svc
+- description: The name of the database used for the frontend objects.
+  displayName: Database-Host
+  name: DB_NAME
+  required: true
+  value: mariadb
